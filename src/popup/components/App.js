@@ -7,7 +7,7 @@ import styles from './App.css'
 
 registerLanguage('javascript', js)
 
-const tabs = ['Nightmare', 'Puppeteer']
+const tabs = ['Nightmare', 'Puppeteer', 'Cypress']
 
 const App = ({ onSelectTab, selectedTab, onRestart, recording }) => {
   let script = ''
@@ -15,6 +15,8 @@ const App = ({ onSelectTab, selectedTab, onRestart, recording }) => {
     script = getNightmare(recording)
   } else if (selectedTab === 'Puppeteer') {
     script = getPuppeteer(recording)
+  } else if (selectedTab === 'Cypress') {
+    script = getCypress(recording)
   }
 
   return (
@@ -42,33 +44,33 @@ const App = ({ onSelectTab, selectedTab, onRestart, recording }) => {
   )
 }
 
-function getNightmare (recording) {
+function getNightmare(recording) {
   return `const Nightmare = require('nightmare')
 const nightmare = Nightmare({ show: true })
 
 nightmare
 ${recording.reduce((records, record, i) => {
-  const { action, url, selector, value } = record
-  let result = records
-  if (i !== records.length) result += '\n'
+    const { action, url, selector, value } = record
+    let result = records
+    if (i !== records.length) result += '\n'
 
-  switch (action) {
-    case 'keydown':
-      result += `.type('${selector}', '${value}')`
-      break
-    case 'click':
-      result += `.click('${selector}')`
-      break
-    case 'goto':
-      result += `.goto('${url}')`
-      break
-    case 'reload':
-      result += `.refresh()`
-      break
-  }
+    switch (action) {
+      case 'keydown':
+        result += `.type('${selector}', '${value}')`
+        break
+      case 'click':
+        result += `.click('${selector}')`
+        break
+      case 'goto':
+        result += `.goto('${url}')`
+        break
+      case 'reload':
+        result += `.refresh()`
+        break
+    }
 
-  return result
-}, '')}
+    return result
+  }, '')}
 .end()
 .then(function (result) {
   console.log(result)
@@ -78,36 +80,69 @@ ${recording.reduce((records, record, i) => {
 });`
 }
 
-function getPuppeteer (recording) {
+function getPuppeteer(recording) {
   return `const puppeteer = require('puppeteer')
 
 (async () => {
   const browser = await puppeteer.launch()
   const page = await browser.newPage()
 ${recording.reduce((records, record, i) => {
-  const { action, url, selector, value } = record
-  let result = records
-  if (i !== records.length) result += '\n'
+    const { action, url, selector, value } = record
+    let result = records
+    if (i !== records.length) result += '\n'
 
-  switch (action) {
-    case 'keydown':
-      result += `  await page.type('${selector}', '${value}')`
-      break
-    case 'click':
-      result += `  await page.click('${selector}')`
-      break
-    case 'goto':
-      result += `  await page.goto('${url}')`
-      break
-    case 'reload':
-      result += `  await page.reload()`
-      break
-  }
+    switch (action) {
+      case 'keydown':
+        result += `  await page.type('${selector}', '${value}')`
+        break
+      case 'click':
+        result += `  await page.click('${selector}')`
+        break
+      case 'goto':
+        result += `  await page.goto('${url}')`
+        break
+      case 'reload':
+        result += `  await page.reload()`
+        break
+    }
 
-  return result
-}, '')}
+    return result
+  }, '')}
   await browser.close()
 })()`
 }
+
+function getCypress(recording) {
+  return `const cypress = require('cypress')
+
+  describe('Thing You\\\'re Testing', () => {
+    it('should do thing', () => {
+${recording.reduce((records, record, i) => {
+    const { action, url, selector, value } = record
+    let result = records
+    if (i !== records.length) result += '\n'
+
+    switch (action) {
+      case 'keydown':
+        result += `  cy.get('${selector}').type('${value}')`
+        break
+      case 'click':
+        result += `  cy.get('${selector}').click()`
+        break
+      case 'goto':
+        result += `  cy.visit('${url}')`
+        break
+      case 'reload':
+        result += `  cy.reload()`
+        break
+    }
+
+    return result
+  }, '')}
+  })
+})`
+
+}
+
 
 export default App

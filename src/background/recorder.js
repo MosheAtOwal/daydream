@@ -34,6 +34,7 @@ export default class Recorder {
       this.lastUrl = message.value
     } else {
       this.recording.push(message)
+      console.log(`>> Message: `, JSON.stringify(message))
     }
   }
 }
