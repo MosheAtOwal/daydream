@@ -1,26 +1,58 @@
 import Selector from 'css-selector-generator'
+import { threadId } from 'worker_threads';
 
 const selector = new Selector()
 
 class EventRecorder {
   start () {
+    const recordableDataAttribute = 'data-cy-recordable'
     const typeableElements = document.querySelectorAll('input, textarea')
     const clickableElements = document.querySelectorAll('a, button')
-
-    for (let i = 0; i < typeableElements.length; i++) {
-      typeableElements[i].addEventListener('keydown', this.handleKeydown)
+    const recordableElements = document.querySelectorAll(`[${recordableDataAttribute}]`)
+    
+    const elementsByRecordableEventType = {
+      'click': clickableElements,
+      'keydown': typeableElements
     }
 
-    for (let i = 0; i < clickableElements.length; i++) {
-      clickableElements[i].addEventListener('click', this.handleClick)
+    recordableElements.forEach((element) => {
+      Set(element.getAttribute(recordableDataAttribute).split(',').map(event => event.trim())).forEach((event) => {
+        this.addElementForEvent(element, event)
+      })
+    })
+
+    const events = Object.keys(elementsByRecordableEventType)
+
+    for (let i = 0; i < events.length; i++) {
+      const eventType = events[i]
+      const elements = elementsByRecordableEventType[eventType]
+      elements.forEach(element => {
+        const isClick = eventType === 'click'
+        const isKeydown = eventType === 'keydown'
+        const handler = (isClick ? this.handleClick : (isKeydown ? this.handleKeydown : this.handleEvent))
+        
+        element.addEventListener(eventType, handler)
+      })
+
     }
   }
+   addElementForEvent (element, event) {
+    let elementsForEvent = elementsByRecordableEventType[event]
 
+    if (!elementsForEvent) {
+      elementsForEvent = [element]
+    } else {
+      elementsForEvent.push(element)
+    }
+    
+    elementsByRecordableEventType[event] = elementsForEvent
+  }
+  
   handleKeydown (e) {
     if (e.keyCode !== 9) {
       return
     }
-    sendMessage(e)
+    this.handleEvent(e)
   }
 
   handleClick (e) {
@@ -30,6 +62,10 @@ class EventRecorder {
         value: e.target.href
       })
     }
+    this.handleEvent(e)
+  }
+
+  handleEvent(e) {
     sendMessage(e)
   }
 }
