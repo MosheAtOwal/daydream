@@ -4,17 +4,20 @@ import { threadId } from 'worker_threads';
 const selector = new Selector()
 
 class EventRecorder {
+
+constructor() {
+  const typeableElements = document.querySelectorAll('input, textarea')
+    const clickableElements = document.querySelectorAll('a, button')
+  this.elementsByRecordableEventType = {
+    'click': clickableElements,
+    'keydown': typeableElements
+  }
+}
   start () {
     const recordableDataAttribute = 'data-cy-recordable'
-    const typeableElements = document.querySelectorAll('input, textarea')
-    const clickableElements = document.querySelectorAll('a, button')
+    
     const recordableElements = document.querySelectorAll(`[${recordableDataAttribute}]`)
     
-    const elementsByRecordableEventType = {
-      'click': clickableElements,
-      'keydown': typeableElements
-    }
-
     recordableElements.forEach((element) => {
       Set(element.getAttribute(recordableDataAttribute).split(',').map(event => event.trim())).forEach((event) => {
         this.addElementForEvent(element, event)
